@@ -11,7 +11,13 @@ class ProduitController extends Controller
    
     public function index()
     {
-        return response()->json(Produite::all());
+        $products = Produite::all(); // Fetch all products
+        foreach ($products as $product) {
+            if (!$product->image) {
+                $product->image = url('images/default.png');
+            }
+        }
+        return response()->json($products);
     }
 
     

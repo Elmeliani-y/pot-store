@@ -22,6 +22,8 @@ const Inscrire = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [cities, setCities] = useState([]);
+  const [popupMessage, setPopupMessage] = useState(null); // State for popup message
+  const [popupType, setPopupType] = useState(null); // State for popup type (success or failure)
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -133,6 +135,8 @@ const Inscrire = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log("Form submitted", formData); // Debugging: Log form data
+
     const newErrors = {};
     Object.keys(formData).forEach((field) => {
       const error = validateField(field, formData[field]);
@@ -142,7 +146,10 @@ const Inscrire = () => {
     });
 
     if (Object.keys(newErrors).length > 0) {
+      console.log("Validation errors", newErrors); // Debugging: Log validation errors
       setErrors(newErrors);
+      setPopupMessage("Veuillez corriger les erreurs dans le formulaire.");
+      setPopupType("failure");
       return;
     }
 
@@ -158,18 +165,26 @@ const Inscrire = () => {
         password_confirmation: formData.confirmPassword,
       };
 
+      console.log("Sending data to API", dataToSend); // Debugging: Log data being sent
+
       const response = await api.post("/register", dataToSend);
-      console.log("Success:", response.data);
-      navigate("/Connecter");
+      console.log("API response", response.data); // Debugging: Log API response
+
+      // Store the token and user information in localStorage
+      localStorage.setItem("authToken", response.data.token);
+      localStorage.setItem("userId", response.data.user.id);
+
+      setPopupMessage("Création du compte réussie !");
+      setPopupType("success");
+      setTimeout(() => navigate("/"), 2000); // Redirect to home page after 2 seconds
     } catch (error) {
-      console.error("Error:", error.response?.data || error.message);
+      console.error("Error during registration", error.response?.data || error.message); // Debugging: Log error details
       if (error.response?.data?.errors) {
-        setErrors(error.response.data.errors);
+        setPopupMessage(`Erreur: ${JSON.stringify(error.response.data.errors)}`);
       } else {
-        setErrors({
-          message: ["Une erreur de l'inscription."],
-        });
+        setPopupMessage("Une erreur de l'inscription. Veuillez réessayer.");
       }
+      setPopupType("failure");
     }
   };
 
@@ -177,183 +192,143 @@ const Inscrire = () => {
     setShowPassword(!showPassword);
   };
 
+  const handleClosePopup = (e) => {
+    if (e.target.classList.contains("popup-overlay")) {
+      setPopupMessage(null);
+      setPopupType(null);
+    }
+  };
+
   return (
-    <div className="signup-container">
-      <div className="signup-content">
-        <div className="signup-header">
-          <img src={icone} alt="icone" className="signup-logo" />
-          <div className="signup-options">
-            <Link to="/Connecter" className="signup-option">
-              Se connecter
-            </Link>
-            <span className="signup-separator">|</span>
-            <span className="signup-option active">S'inscrire</span>
-          </div>
+    <div className="auth-container">
+      {popupMessage && (
+        <div className="popup-overlay" onClick={handleClosePopup}>
+          <div className={`popup ${popupType}`}>{popupMessage}</div>
         </div>
-
-        <p className="signup-instructions text-center">
-          Entrez votre formation pour vous inscrire.
-        </p>
-
-        <form onSubmit={handleSubmit} className="signup-form">
+      )}
+      <div className="auth-card">
+        <div className="auth-header">
+          <img src={icone} alt="Logo" className="auth-logo" />
+          <h2 className="auth-title">
+            <Link to="/Connecter" className="auth-title-link auth-title-inactive">Se connecter</Link>
+            <span> | </span>
+            <Link to="/Inscrire" className="auth-title-link auth-title-active">S'inscrire</Link>
+          </h2>
+        </div>
+        <p className="auth-subtitle">Entrez vos informations pour vous inscrire.</p>
+        <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-row">
             <div className="form-group col-md-6">
+              <label htmlFor="prenom">Prénom</label>
               <input
                 type="text"
-                name="nom"
-                value={formData.nom}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Nom"
-                className={`form-control ${errors.nom ? "is-invalid" : ""}`}
-              />
-              {errors.nom && (
-                <div className="invalid-feedback">{errors.nom[0]}</div>
-              )}
-            </div>
-            <div className="form-group col-md-6">
-              <input
-                type="text"
+                id="prenom"
                 name="prenom"
                 value={formData.prenom}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Prenom"
-                className={`form-control ${errors.prenom ? "is-invalid" : ""}`}
+                required
               />
-              {errors.prenom && (
-                <div className="invalid-feedback">{errors.prenom[0]}</div>
-              )}
             </div>
-          </div>
-          <div className="form-row">
             <div className="form-group col-md-6">
+              <label htmlFor="nom">Nom</label>
               <input
                 type="text"
+                id="nom"
+                name="nom"
+                value={formData.nom}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group col-md-6">
+              <label htmlFor="telephone">Téléphone</label>
+              <input
+                type="text"
+                id="telephone"
                 name="telephone"
                 value={formData.telephone}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Votre Numéro"
-                className={`form-control ${
-                  errors.telephone ? "is-invalid" : ""
-                }`}
+                required
               />
-              {errors.telephone && (
-                <div className="invalid-feedback">{errors.telephone[0]}</div>
-              )}
             </div>
             <div className="form-group col-md-6">
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Email"
-                className={`form-control ${errors.email ? "is-invalid" : ""}`}
-              />
-              {errors.email && (
-                <div className="invalid-feedback">{errors.email[0]}</div>
-              )}
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group col-md-6">
+              <label htmlFor="ville">Ville</label>
               <select
+                id="ville"
                 name="ville"
                 value={formData.ville}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                className={`form-control custom-select ${
-                  errors.ville ? "is-invalid" : ""
-                }`}
+                required
               >
-                <option value="">Sélectionnez une ville</option>
-                {cities.map((city, index) => (
-                  <option key={index} value={city} className="green-option">
+                <option value="">Choisir une ville</option>
+                {cities.map((city) => (
+                  <option key={city} value={city}>
                     {city}
                   </option>
                 ))}
               </select>
-              {errors.ville && (
-                <div className="invalid-feedback">{errors.ville[0]}</div>
-              )}
-            </div>
-            <div className="form-group col-md-6">
-              <input
-                type="text"
-                name="adress"
-                value={formData.adress}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="adresse"
-                className={`form-control ${errors.adress ? "is-invalid" : ""}`}
-              />
-              {errors.adress && (
-                <div className="invalid-feedback">{errors.adress[0]}</div>
-              )}
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group col-md-6">
-              <div className="password-group">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="Mode de passe"
-                  className={`form-control ${
-                    errors.password ? "is-invalid" : ""
-                  }`}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={togglePasswordVisibility}
-                >
-                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                </button>
-              </div>
-              {errors.password && (
-                <div className="invalid-feedback">{errors.password[0]}</div>
-              )}
-            </div>
-            <div className="form-group col-md-6">
-              <div className="password-group">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="Confirmer"
-                  className={`form-control ${
-                    errors.confirmPassword ? "is-invalid" : ""
-                  }`}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={togglePasswordVisibility}
-                >
-                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <div className="invalid-feedback">
-                  {errors.confirmPassword[0]}
-                </div>
-              )}
             </div>
           </div>
 
-          <button type="submit" className="btn-primary btn-block">
+          <div className="form-row">
+            <div className="form-group col-md-6">
+              <label htmlFor="adress">Adresse</label>
+              <input
+                type="text"
+                id="adress"
+                name="adress"
+                value={formData.adress}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group col-md-6">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group col-md-6">
+              <label htmlFor="password">Mot de passe</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group col-md-6">
+              <label htmlFor="confirmPassword">Confirmer le mot de passe</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" className="auth-button">
             S'inscrire
           </button>
         </form>
+        <p className="auth-footer">
+          Déjà inscrit ? <Link to="/Connecter">Se connecter</Link>
+        </p>
       </div>
     </div>
   );

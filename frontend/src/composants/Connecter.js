@@ -14,6 +14,8 @@ const Connecter = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [popupMessage, setPopupMessage] = useState(null); // State for popup message
+  const [popupType, setPopupType] = useState(null); // State for popup type (success or failure)
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -38,6 +40,13 @@ const Connecter = () => {
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleClosePopup = (e) => {
+    if (e.target.classList.contains("popup-overlay")) {
+      setPopupMessage(null);
+      setPopupType(null);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -83,7 +92,8 @@ const Connecter = () => {
       }
     } catch (error) {
       console.error("Erreur de connexion:", error.message);
-      setErrors({ message: error.message || "Une erreur de connexion." });
+      setPopupMessage(error.message || "Une erreur de connexion.");
+      setPopupType("failure");
     } finally {
       setIsLoading(false);
     }
@@ -101,85 +111,55 @@ const Connecter = () => {
   };
 
   return (
-    <div className="signup-container">
-      <div className="signup-content">
-        <div className="signup-header">
-          <img src={icone} alt="icone" className="signup-logo" />
-          <div className="signup-options">
-            <Link to="/Connecter" className="signup-option active">
-              Se connecter
-            </Link>
-            <span className="signup-separator">|</span>
-            <Link to="/Inscrire" className="signup-option">
-              S'inscrire
-            </Link>
-          </div>
+    <div className="auth-container">
+      {popupMessage && (
+        <div className="popup-overlay" onClick={handleClosePopup}>
+          <div className={`popup ${popupType}`}>{popupMessage}</div>
         </div>
-
-        <p className="signup-instructions text-center">
-          Entrez vos informations pour vous connecter.
-        </p>
-
-        {errors.message && (
-          <div className="alert alert-danger" role="alert">
-            {errors.message}
+      )}
+      <div className="auth-card">
+        <div className="auth-header">
+          <img src={icone} alt="Logo" className="auth-logo" />
+          <h2 className="auth-title">
+            <Link to="/Connecter" className="auth-title-link auth-title-active">Se connecter</Link>
+            <span> | </span>
+            <Link to="/Inscrire" className="auth-title-link auth-title-inactive">S'inscrire</Link>
+          </h2>
+        </div>
+        <p className="auth-subtitle">Entrez vos informations pour vous connecter.</p>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email" // Added name attribute
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="signup-form">
-          <div className="form-row">
-            <div className="form-group col-md-12">
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email"
-                className={`form-control ${errors.email ? "is-invalid" : ""}`}
-              />
-              {errors.email && (
-                <div className="invalid-feedback">{errors.email}</div>
-              )}
-            </div>
+          <div className="form-group">
+            <label htmlFor="password">Mot de passe</label>
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              name="password" // Added name attribute
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={togglePasswordVisibility}
+            >
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+            </button>
           </div>
-
-          <div className="form-row">
-            <div className="form-group col-md-12">
-              <div className="password-group">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Mot de passe"
-                  className={`form-control ${
-                    errors.password ? "is-invalid" : ""
-                  }`}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={togglePasswordVisibility}
-                >
-                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                </button>
-              </div>
-              {errors.password && (
-                <div className="invalid-feedback">{errors.password}</div>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="btn-primary btn-block"
-            disabled={isLoading}
-          >
+          <button type="submit" className="auth-button">
             {isLoading ? "Connexion en cours..." : "Se connecter"}
           </button>
-          <div className="text-center mt-3">
-              <Link to="/forgot-password">Mot de passe oublié ?</Link>
-          </div>
         </form>
       </div>
     </div>

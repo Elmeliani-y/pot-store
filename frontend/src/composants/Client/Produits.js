@@ -1,8 +1,8 @@
 import React from 'react';
 import Footer from '../../layout/Footer';
-import Navigation from '../../layout/Navigation';
 import ListProduits from './ListProduits';
 import BarreCategories from './BarreCategories';
+import Navigation from "../../layout/Navigation";
 
 const Produits = () => {
   return (

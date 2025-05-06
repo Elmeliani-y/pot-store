@@ -29,6 +29,15 @@ class User extends Authenticatable implements JWTSubject
     ];
 
     /**
+     * The attributes that should be set by default.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'role' => 'client', // Default role is client
+    ];
+
+    /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      *
      * @return mixed

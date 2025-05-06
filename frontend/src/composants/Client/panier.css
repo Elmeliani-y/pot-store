@@ -1,0 +1,10 @@
+.cart-icon {
+  border-radius: 50%; /* Make the icon circular */
+  width: 50px; /* Set fixed width */
+  height: 50px; /* Set fixed height */
+  background-color: transparent; /* Remove white background */
+  display: flex; /* Center content */
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* Clip content to circle */
+}

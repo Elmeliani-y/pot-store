@@ -1,4 +1,3 @@
-
 export const fetchPanierRequest = () => ({ type: 'FETCH_PANIER_REQUEST' });
 export const fetchPanierSuccess = (data) => ({
   type: 'FETCH_PANIER_SUCCESS',
@@ -53,34 +52,61 @@ export const updateQuantity = (itemId, newQuantity) => async (dispatch) => {
 };
 
 const initialPanierState = {
-  panier: [],
+  panier: JSON.parse(localStorage.getItem("panier")) || [],
   produits: [],
   loading: false,
   error: null,
 };
 
+// Ensure localStorage is cleared if the user is not logged in
+if (!localStorage.getItem("authToken")) {
+  localStorage.setItem("panier", JSON.stringify([]));
+}
+
 const panierReducer = (state = initialPanierState, action) => {
+  console.log('Processing action in panierReducer:', action);
   switch (action.type) {
     case 'FETCH_PANIER_REQUEST':
       return { ...state, loading: true, error: null };
-    case 'FETCH_PANIER_SUCCESS':
-      return {
+    case 'FETCH_PANIER_SUCCESS': {
+      console.log('FETCH_PANIER_SUCCESS action payload:', action.payload);
+      const updatedState = {
         ...state,
         loading: false,
-        panier: action.payload.ligneCommandes,
-        produits: action.payload.produits,
+        panier: action.payload.ligneCommandes || JSON.parse(localStorage.getItem("panier")) || [],
       };
+      return updatedState;
+    }
     case 'FETCH_PANIER_FAILURE':
       return { ...state, loading: false, error: action.payload };
-    case 'MODIFIER_QUANTITE':
-      return {
-        ...state,
-        panier: state.panier.map((item) =>
-          item.id === action.payload.itemId
-            ? { ...item, quantité: action.payload.newQuantity }
+    case 'MODIFIER_QUANTITE': {
+      const updatedPanier = state.panier.map((item) =>
+        item.id === action.payload.itemId
+          ? { ...item, quantité: action.payload.newQuantity }
+          : item
+      );
+      localStorage.setItem("panier", JSON.stringify(updatedPanier));
+      return { ...state, panier: updatedPanier };
+    }
+    case 'AJOUTER_AU_PANIER': {
+      const existingProduct = state.panier.find((item) => item.id === action.payload.id);
+      let updatedPanier;
+      
+      if (existingProduct) {
+        updatedPanier = state.panier.map(item =>
+          item.id === action.payload.id
+            ? { ...item, quantité: item.quantité + 1 }
             : item
-        ),
-      };
+        );
+      } else {
+        updatedPanier = [...state.panier, action.payload];
+      }
+      
+      localStorage.setItem("panier", JSON.stringify(updatedPanier));
+      return { ...state, panier: updatedPanier };
+    }
+    case 'AJOUTER_AU_PANIER_ERREUR':
+      return { ...state, error: action.payload };
     default:
       return state;
   }
